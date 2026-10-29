@@ -1,95 +1,238 @@
-import os
+from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
-from flask import Flask, request, jsonify, send_from_directory
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from io import BytesIO
+
+# -----------------------------
+# Configuration
+# -----------------------------
 
 IMAGE_SIZE = 224
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = Path(__file__).resolve().parent
 
-# index.html is looked for in a "frontend" folder first, otherwise next to server.py
-_frontend = os.path.join(BASE_DIR, "frontend")
-FRONTEND_DIR = _frontend if os.path.isdir(_frontend) else BASE_DIR
+MODEL_PATH = BASE_DIR / "leafcare_mobilenetv2.keras"
+CLASS_NAMES_PATH = BASE_DIR / "class_names.txt"
 
-# index.html has its own CSS and JavaScript inside, so no static files are served
-app = Flask(__name__, static_folder=None)
-
-model = tf.keras.models.load_model(os.path.join(BASE_DIR, "leafcare_mobilenetv2.keras"), compile=False)
-with open(os.path.join(BASE_DIR, "class_names.txt")) as f:
-    class_names = [line.strip() for line in f if line.strip()]
-
-# Folder name (from class_names.txt) -> (crop, condition) exactly as written in index.html
-LABEL_INFO = {
-    "Potato___Early_blight": ("Potato", "Early Blight"),
-    "Potato___Late_blight": ("Potato", "Late Blight"),
-    "Potato___healthy": ("Potato", "Healthy"),
-    "Tomato_healthy": ("Tomato", "Healthy"),
-    "Tomato_Leaf_Mold": ("Tomato", "Leaf Mold"),
-    "Tomato__Tomato_mosaic_virus": ("Tomato", "Mosaic Virus"),
-    "Tomato__Target_Spot": ("Tomato", "Target Spot"),
+TREATMENT = {
+    "Potato___Early_blight": (
+        "Remove affected leaves, apply a copper-based fungicide "
+        "according to its label, and avoid overhead watering."
+    ),
+    "Potato___Late_blight": (
+        "Late blight can spread rapidly. Remove infected plants "
+        "according to local agricultural guidance and seek advice "
+        "from an agriculture professional about disease management."
+    ),
+    "Potato___healthy": (
+        "No disease treatment is indicated by this prediction. "
+        "Continue regular monitoring and normal plant care."
+    ),
+    "Tomato_healthy": (
+        "No disease treatment is indicated by this prediction. "
+        "Continue regular monitoring and normal plant care."
+    ),
+    "Tomato_Leaf_Mold": (
+        "Improve ventilation, reduce humidity, and remove badly "
+        "affected leaves where practical. Seek local advice if the "
+        "disease persists."
+    ),
+    "Tomato__Tomato_mosaic_virus": (
+        "There is generally no curative treatment for an established "
+        "viral infection. Isolate suspicious plants where practical, "
+        "clean tools, and seek local agricultural guidance."
+    ),
+    "Tomato__Target_Spot": (
+        "Improve airflow, remove affected leaves where practical, "
+        "and ask a local agriculture professional about appropriate "
+        "disease-management options."
+    ),
 }
 
-def describe(name):
-    if name in LABEL_INFO:
-        return LABEL_INFO[name]
-    parts = [p for p in name.replace("___", "_").replace("__", "_").split("_") if p]   # fallback guess
-    return (parts[0].title() if parts else "Unknown"), (" ".join(parts[1:]).title() or "Unknown")
+# -----------------------------
+# Create FastAPI application
+# -----------------------------
 
-def estimate_severity(img):
-    """Rough % of the leaf that is not healthy green (yellow / brown / dark patches).
-    A simple colour-based estimate, not a trained model."""
-    hsv = np.array(img.convert("HSV"), dtype="float32")
-    hue = hsv[..., 0] * 360 / 255
-    sat = hsv[..., 1] / 255
-    val = hsv[..., 2] / 255
-    leaf = (sat > 0.20) & (val > 0.10)            # ignores grey / white / black background
-    green = leaf & (hue >= 70) & (hue <= 160)
-    diseased = leaf & ~green
-    total = int(leaf.sum())
-    if total < 500:
-        return 0.0
-    return float(min(100.0, 100.0 * diseased.sum() / total))
+app = FastAPI(
+    title="LeafCare API",
+    description="Plant leaf disease prediction and care advice",
+    version="1.0.0",
+)
 
-@app.after_request
-def allow_other_origins(resp):
-    # lets the page work when opened from VS Code Live Server (port 5500)
-    resp.headers["Access-Control-Allow-Origin"] = "*"
-    return resp
+# Allows the frontend to communicate with this backend.
+# These settings are suitable for local development.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "null",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
-@app.route("/")
+# -----------------------------
+# Load model and class names
+# -----------------------------
+
+try:
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"Model file not found: {MODEL_PATH}"
+        )
+
+    if not CLASS_NAMES_PATH.exists():
+        raise FileNotFoundError(
+            f"Class names file not found: {CLASS_NAMES_PATH}"
+        )
+
+    model = tf.keras.models.load_model(str(MODEL_PATH))
+
+    with open(CLASS_NAMES_PATH, "r", encoding="utf-8") as file:
+        class_names = [
+            line.strip()
+            for line in file
+            if line.strip()
+        ]
+
+    if not class_names:
+        raise ValueError("class_names.txt is empty.")
+
+    print("LeafCare model loaded successfully.")
+    print("Classes:", class_names)
+
+except Exception as error:
+    raise RuntimeError(
+        f"Could not load the LeafCare model or class names: {error}"
+    ) from error
+
+
+# -----------------------------
+# Home endpoint
+# -----------------------------
+
+@app.get("/")
 def home():
-    return send_from_directory(FRONTEND_DIR, "index.html")
+    return {
+        "message": "Welcome to the LeafCare API!",
+        "status": "running",
+        "prediction_endpoint": "/predict",
+        "documentation": "/docs",
+    }
 
-@app.route("/health")
+
+# -----------------------------
+# Health-check endpoint
+# -----------------------------
+
+@app.get("/health")
 def health():
-    return jsonify({"status": "ok", "classes": class_names})
+    return {
+        "status": "healthy",
+        "model_loaded": model is not None,
+        "number_of_classes": len(class_names),
+    }
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+
+# -----------------------------
+# Image prediction endpoint
+# -----------------------------
+
+@app.post("/predict")
+async def predict(image: UploadFile = File(...)):
+
+    # Check the uploaded file type.
+    if image.content_type not in {
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+    }:
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a JPG, JPEG, or PNG image.",
+        )
+
+    # Read and decode the uploaded image.
     try:
-        img = Image.open(request.files["image"].stream).convert("RGB")
-    except Exception:
-        return jsonify({"error": "Could not read that file as an image"}), 400
+        image_bytes = await image.read()
 
+        if not image_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded image is empty.",
+            )
+
+        # Limit uploaded image size to 10 MB.
+        if len(image_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=413,
+                detail="Image size must be 10 MB or less.",
+            )
+
+        with Image.open(BytesIO(image_bytes)) as uploaded_image:
+            img = uploaded_image.convert("RGB")
+
+    except HTTPException:
+        raise
+
+    except (UnidentifiedImageError, OSError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded file is not a valid image.",
+        )
+
+    # Preprocess the image.
+    # This matches the preprocessing in your supplied Streamlit code.
     img = img.resize((IMAGE_SIZE, IMAGE_SIZE))
-    arr = np.array(img, dtype="float32")[None, ...]
 
-    probs = model.predict(arr, verbose=0)[0]
-    idx = int(np.argmax(probs))
-    crop, condition = describe(class_names[idx])
-    severity = 0.0 if condition == "Healthy" else estimate_severity(img)
+    arr = np.array(img, dtype="float32")
+    arr = np.expand_dims(arr, axis=0)
 
-    return jsonify({
-        "label": f"{crop} {condition}",       # shown on the page, e.g. "Potato Early Blight"
-        "crop": crop,
-        "condition": condition,
-        "confidence": float(probs[idx]),      # 0 to 1
-        "severity": round(severity, 1),       # 0 to 100 (rough colour-based estimate)
-    })
+    # Predict the class.
+    try:
+        probabilities = model.predict(arr, verbose=0)[0]
 
-if __name__ == "__main__":
-    # local run. On Render, gunicorn starts the app instead (see the start command)
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(error)}",
+        )
+
+    if len(probabilities) != len(class_names):
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "The model output does not match the number "
+                "of entries in class_names.txt."
+            ),
+        )
+
+    # Find the most likely class.
+    index = int(np.argmax(probabilities))
+    predicted_class = class_names[index]
+    confidence = float(probabilities[index]) * 100
+
+    # Get the matching treatment information.
+    treatment = TREATMENT.get(
+        predicted_class,
+        "No treatment note is available for this class. "
+        "Consult a qualified local agriculture professional.",
+    )
+
+    # Return results in the format expected by your frontend.
+    return {
+        "label": predicted_class,
+        "disease": predicted_class,
+        "prediction": predicted_class,
+        "confidence": round(confidence / 100, 6),
+        "confidence_percentage": round(confidence, 2),
+        "treatment": treatment,
+        "advice": treatment,
+    }
