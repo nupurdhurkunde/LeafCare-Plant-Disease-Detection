@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_URL = "http://127.0.0.1:8000/predict";
+  const API_URL = "https://leafcare-plant-disease-detection.onrender.com";
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
   let lang = "en", crop = "All", img = null;
