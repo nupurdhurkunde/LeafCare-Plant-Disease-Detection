@@ -1,128 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LeafCare | Plant Health Assistant</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeafCare | Plant Health Assistant</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app">
+
   <aside class="sidebar">
-    <div class="brand">🌿 LeafCare
-      <small>Plant Health & Treatment Advisory</small>
-    </div>
+    <div class="brand">🌿 LeafCare<small data-i18n="brandSub"></small></div>
     <nav>
-      <button class="active" data-page="dashboard">▦ Dashboard</button>
-      <button data-page="analyze">📷 Analyze Plant</button>
-      <button data-page="guide">📖 Disease & Treatment Guide</button>
-      <button data-page="tips">🌱 Tips & Prevention</button>
+      <button class="active" data-page="dashboard">▦ <span data-i18n="dashboard"></span></button>
+      <button data-page="analyze">📷 <span data-i18n="analyze"></span></button>
+      <button data-page="guide">📖 <span data-i18n="guide"></span></button>
+      <button data-page="tips">🌱 <span data-i18n="tips"></span></button>
     </nav>
     <div class="sidebar-note">
-      <strong>🌱 Plant health matters</strong>
-      <p>Upload a clear leaf photograph to check for a possible disease and explore care recommendations.</p>
-      <p>Model: MobileNetV2 (planned integration)</p>
+      <strong data-i18n="sideTitle"></strong>
+      <p data-i18n="sideText"></p>
+      <p data-i18n="model"></p>
     </div>
   </aside>
 
   <div class="main">
     <header>
-      <strong id="breadcrumb">Dashboard</strong>
+      <strong id="breadcrumb"></strong>
       <div>
-        <button id="themeButton">🌙 Theme</button>
-        <button id="languageButton">हिंदी</button>
+        <button id="themeButton" data-i18n="theme"></button>
+        <button id="languageButton" data-i18n="lang"></button>
       </div>
     </header>
 
     <main class="content">
+
+      <!-- DASHBOARD -->
       <section class="page active" id="dashboard">
-        <p class="green"><strong>WELCOME TO LEAFCARE 🌱</strong></p>
-        <h1>Let's keep your plants healthy.</h1>
-        <p class="muted">Explore plant diseases, upload leaf photographs, and learn about possible treatments.</p>
+        <p class="green"><strong data-i18n="welcome"></strong></p>
+        <h1 data-i18n="heading"></h1>
+        <p class="muted" data-i18n="intro"></p>
 
         <div class="panel">
-          <h2>Check your plant</h2>
-          <p>Choose a leaf photograph to begin.</p>
-          <button class="primary" id="startAnalyze">＋ Analyze a Plant</button>
+          <h2 data-i18n="check"></h2>
+          <p data-i18n="choose"></p>
+          <button class="primary" id="startAnalyze" data-i18n="start"></button>
         </div>
 
         <div class="grid">
-          <div class="stat"><strong>7</strong>Supported disease classes</div>
-          <div class="stat"><strong>2</strong>Supported crops</div>
-          <div class="stat"><strong id="scanCount">0</strong>Analyses attempted</div>
+          <div class="stat"><strong>7</strong><span data-i18n="st1"></span></div>
+          <div class="stat"><strong>2</strong><span data-i18n="st2"></span></div>
+          <div class="stat"><strong id="scanCount">0</strong><span data-i18n="st3"></span></div>
         </div>
 
-        <div class="panel">
-          <h2>How LeafCare works</h2>
-          <ol>
-            <li>Upload a clear photograph of a plant leaf.</li>
-            <li>The connected AI model predicts a possible condition.</li>
-            <li>Review the confidence score and advisory information.</li>
-            <li>Follow appropriate prevention and care practices.</li>
-          </ol>
-          <p class="muted">The image prediction feature requires a running backend model. The guide and other frontend features can be explored without it.</p>
+        <div class="panel fancy">
+          <div class="head">
+            <div>
+              <span class="tag" data-i18n="tag1"></span>
+              <h2 data-i18n="how"></h2>
+              <p data-i18n="howSub"></p>
+            </div>
+            <div class="leaf-icon">🍃</div>
+          </div>
+          <div class="steps">
+            <div class="work-step">
+              <div class="step-icon">📸</div>
+              <span class="step-number"><span data-i18n="step"></span> 01</span>
+              <h3 data-i18n="s1t"></h3><p data-i18n="s1d"></p>
+            </div>
+            <span class="arrow">→</span>
+            <div class="work-step">
+              <div class="step-icon">🤖</div>
+              <span class="step-number"><span data-i18n="step"></span> 02</span>
+              <h3 data-i18n="s2t"></h3><p data-i18n="s2d"></p>
+            </div>
+            <span class="arrow">→</span>
+            <div class="work-step">
+              <div class="step-icon">🔍</div>
+              <span class="step-number"><span data-i18n="step"></span> 03</span>
+              <h3 data-i18n="s3t"></h3><p data-i18n="s3d"></p>
+            </div>
+            <span class="arrow">→</span>
+            <div class="work-step">
+              <div class="step-icon">🌱</div>
+              <span class="step-number"><span data-i18n="step"></span> 04</span>
+              <h3 data-i18n="s4t"></h3><p data-i18n="s4d"></p>
+            </div>
+          </div>
         </div>
 
-        <div class="panel">
-          <h2>Recent activity</h2>
-          <ul id="history"><li class="muted">No analyses yet.</li></ul>
-          <button class="secondary" id="clearHistory">Clear history</button>
+        <div class="panel fancy">
+          <div class="head">
+            <div>
+              <span class="tag" data-i18n="tag2"></span>
+              <h2 data-i18n="recent"></h2>
+              <p data-i18n="recentSub"></p>
+            </div>
+          </div>
+          <div class="activity-summary">
+            <div><strong id="activityCount">0</strong><span data-i18n="total"></span></div>
+          </div>
+          <ul id="history" class="activity-list"><li class="muted" data-i18n="noHistory"></li></ul>
+          <button class="secondary activity-clear" id="clearHistory" data-i18n="clear"></button>
         </div>
       </section>
 
+      <!-- ANALYZE -->
       <section class="page" id="analyze">
-        <h1>Analyze Plant</h1>
-        <p class="muted">Upload a leaf photograph for analysis by your connected model.</p>
+        <h1 data-i18n="aHead"></h1>
+        <p class="muted" data-i18n="aIntro"></p>
         <div class="panel">
           <div class="upload">
-            <h2>🍃 Upload a leaf image</h2>
-            <p>Use a clear photograph with one leaf in focus.</p>
+            <h2 data-i18n="upload"></h2>
+            <p data-i18n="uploadHelp"></p>
             <input type="file" id="imageInput" accept="image/*">
             <img id="preview" class="hidden" alt="Selected leaf preview">
           </div>
-          <p id="uploadMessage" class="muted">No image selected.</p>
-          <button class="primary" id="analyzeButton">Analyze leaf</button>
+          <p id="uploadMessage" class="muted"></p>
+          <button class="primary" id="analyzeButton" data-i18n="analyzeBtn"></button>
         </div>
         <div class="panel hidden" id="resultPanel">
-          <h2>Analysis result</h2>
+          <h2 data-i18n="result"></h2>
           <img id="resultImage" alt="Analyzed leaf">
           <h3 id="resultDisease"></h3>
           <p id="resultConfidence"></p>
           <div id="resultAdvice"></div>
         </div>
-        <div class="notice">
-          The Analyze button connects to
-          <code>http://127.0.0.1:8000/predict</code>.
-          You must run your own compatible FastAPI model backend for real predictions.
-        </div>
+        <div class="notice" data-i18n="notice"></div>
       </section>
 
+      <!-- GUIDE -->
       <section class="page" id="guide">
-        <h1>Disease & Treatment Guide</h1>
-        <p class="muted">Explore the supported potato and tomato conditions, their symptoms, treatment options, and prevention.</p>
-        <input id="searchInput" type="search" placeholder="Search by disease, crop, or symptom...">
+        <h1 data-i18n="gHead"></h1>
+        <p class="muted" data-i18n="gIntro"></p>
+        <input id="searchInput" type="search">
         <div class="filters">
-          <button class="filter active" data-crop="All">All crops</button>
-          <button class="filter" data-crop="Potato">🥔 Potato</button>
-          <button class="filter" data-crop="Tomato">🍅 Tomato</button>
+          <button class="filter active" data-crop="All" data-i18n="all"></button>
+          <button class="filter" data-crop="Potato" data-i18n="potato"></button>
+          <button class="filter" data-crop="Tomato" data-i18n="tomato"></button>
         </div>
         <div class="grid" id="diseaseList"></div>
-        <h2>Treatment & Prevention Details</h2>
+        <h2 data-i18n="tHead"></h2>
         <div id="treatmentList"></div>
-        <div class="notice">
-          These are general educational recommendations, not a confirmed diagnosis.
-          Before using pesticides or fungicides, verify the product, dosage, and safety precautions with a qualified local agriculture professional.
-        </div>
+        <div class="notice" data-i18n="gNotice"></div>
       </section>
 
+      <!-- TIPS -->
       <section class="page" id="tips">
-        <h1>Tips & Prevention</h1>
-        <p class="muted">Good practices can help reduce the risk of many plant diseases.</p>
+        <h1 data-i18n="tipsHead"></h1>
+        <p class="muted" data-i18n="tipsIntro"></p>
         <div class="grid" id="tipsList"></div>
       </section>
     </main>
-
-    <footer>LeafCare — Plant Disease Detection & Treatment Advisory System</footer>
+    <footer data-i18n="footer"></footer>
   </div>
 </div>
 <script src="script.js"></script>
