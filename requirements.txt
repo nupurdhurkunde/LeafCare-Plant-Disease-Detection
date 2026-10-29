@@ -1,6 +1,6 @@
-flask
-gunicorn
+fastapi
+uvicorn
+tensorflow
 pillow
 numpy
-tensorflow-cpu
-keras>=3.13.2
+python-multipart
