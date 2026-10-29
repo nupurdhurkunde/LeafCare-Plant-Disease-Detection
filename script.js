@@ -1,682 +1,298 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const API_URL = "http://127.0.0.1:8000/predict";
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  let lang = "en", crop = "All", img = null;
 
-document.addEventListener("DOMContentLoaded", function () {
-  "use strict";
-
-  let currentLanguage = "en";
-  let currentCrop = "All";
-  let selectedImage = null;
-  let scans = 0;
-
-  const translations = {
+  /* ---------- Text (English / Hindi) ---------- */
+  const T = {
     en: {
-      brandSubtitle: "Plant Health & Treatment Advisory",
-      dashboard: "▦ Dashboard",
-      analyze: "📷 Analyze Plant",
-      guide: "📖 Disease & Treatment Guide",
-      tips: "🌱 Tips & Prevention",
-      sidebarTitle: "🌱 Plant health matters",
-      sidebarText: "Upload a clear leaf photograph to check for a possible disease and explore care recommendations.",
-      model: "Model: MobileNetV2 (planned integration)",
-      breadcrumbDashboard: "Dashboard",
-      breadcrumbAnalyze: "Analyze Plant",
-      breadcrumbGuide: "Disease & Treatment Guide",
-      breadcrumbTips: "Tips & Prevention",
-      theme: "🌙 Theme",
-      welcome: "WELCOME TO LEAFCARE 🌱",
-      heading: "Let's keep your plants healthy.",
+      lang: "हिंदी", dashboard: "Dashboard", analyze: "Analyze Plant", guide: "Disease & Treatment Guide", tips: "Tips & Prevention",
+      brandSub: "Plant Health & Treatment Advisory", sideTitle: "🌱 Plant health matters",
+      sideText: "Upload a clear leaf photograph to check for a possible disease and explore care recommendations.",
+      model: "Model: MobileNetV2 (planned integration)", theme: "🌙 Theme",
+      welcome: "WELCOME TO LEAFCARE 🌱", heading: "Let's keep your plants healthy.",
       intro: "Explore plant diseases, upload leaf photographs, and learn about possible treatments.",
-      check: "Check your plant",
-      choose: "Choose a leaf photograph to begin.",
-      start: "＋ Analyze a Plant",
-      supportedDiseases: "Supported disease classes",
-      supportedCrops: "Supported crops",
-      analyses: "Analyses attempted",
-      how: "How LeafCare works",
-      step1: "Upload a clear photograph of a plant leaf.",
-      step2: "The connected AI model predicts a possible condition.",
-      step3: "Review the confidence score and advisory information.",
-      step4: "Follow appropriate prevention and care practices.",
-      backendInfo: "The image prediction feature requires a running backend model. The guide and other frontend features can be explored without it.",
-      recent: "Recent activity",
-      noHistory: "No analyses yet.",
-      clearHistory: "Clear history",
-      analyzeHeading: "Analyze Plant",
-      analyzeIntro: "Upload a leaf photograph for analysis by your connected model.",
-      upload: "🍃 Upload a leaf image",
-      uploadHelp: "Use a clear photograph with one leaf in focus.",
-      noImage: "No image selected.",
-      analyzeButton: "Analyze leaf",
-      result: "Analysis result",
+      check: "Check your plant", choose: "Choose a leaf photograph to begin.", start: "＋ Analyze a Plant",
+      st1: "Supported disease classes", st2: "Supported crops", st3: "Analyses attempted",
+      tag1: "🌿 SIMPLE & SMART", how: "How LeafCare Works", howSub: "From a leaf photo to healthier plants in four simple steps.", step: "STEP",
+      s1t: "Capture", s1d: "Upload a clear photograph of your plant leaf.",
+      s2t: "Analyze", s2d: "Our connected AI model predicts a possible condition.",
+      s3t: "Understand", s3d: "Review the confidence score and care recommendations.",
+      s4t: "Take Action", s4d: "Follow suitable prevention and plant-care practices.",
+      tag2: "🌱 YOUR PLANT JOURNEY", recent: "Recent Activity", recentSub: "Keep track of your plant health analyses.",
+      total: "Total analyses", noHistory: "🌿 No analyses yet. Your plant scans will appear here.", clear: "Clear History",
+      aHead: "Analyze Plant", aIntro: "Upload a leaf photograph for analysis by your connected model.",
+      upload: "🍃 Upload a leaf image", uploadHelp: "Use a clear photograph with one leaf in focus.",
+      noImage: "No image selected.", analyzeBtn: "Analyze leaf", result: "Analysis result",
       notice: "The Analyze button connects to http://127.0.0.1:8000/predict. You must run your own compatible FastAPI model backend for real predictions.",
-      guideHeading: "Disease & Treatment Guide",
-      guideIntro: "Explore the supported potato and tomato conditions, their symptoms, treatment options, and prevention.",
-      search: "Search by disease, crop, or symptom...",
-      allCrops: "All crops",
-      potato: "🥔 Potato",
-      tomato: "🍅 Tomato",
-      treatmentHeading: "Treatment & Prevention Details",
-      guideNotice: "These are general educational recommendations, not a confirmed diagnosis. Before using pesticides or fungicides, verify the product, dosage, and safety precautions with a qualified local agriculture professional.",
-      tipsHeading: "Tips & Prevention",
-      tipsIntro: "Good practices can help reduce the risk of many plant diseases.",
+      gHead: "Disease & Treatment Guide",
+      gIntro: "Explore the supported potato and tomato conditions, their symptoms, treatment options, and prevention.",
+      search: "Search by disease, crop, or symptom...", all: "All crops", potato: "🥔 Potato", tomato: "🍅 Tomato",
+      tHead: "Treatment & Prevention Details",
+      gNotice: "These are general educational recommendations, not a confirmed diagnosis. Before using pesticides or fungicides, verify the product, dosage, and safety precautions with a qualified local agriculture professional.",
+      tipsHead: "Tips & Prevention", tipsIntro: "Good practices can help reduce the risk of many plant diseases.",
       footer: "LeafCare — Plant Disease Detection & Treatment Advisory System",
-      languageButton: "हिंदी",
-      selected: "Selected: ",
-      noImageAlert: "Please choose a leaf image first.",
-      invalidImage: "Please select an image file.",
-      analyzing: "Analyzing...",
-      analyzingError: "Could not analyze the image.",
+      selected: "Selected: ", noImageAlert: "Please choose a leaf image first.", invalid: "Please select an image file.",
+      analyzing: "Analyzing...", error: "Could not analyze the image.",
       backendError: "Make sure your LeafCare backend is running at http://127.0.0.1:8000 and supports POST /predict.",
-      modelConfidence: "Model confidence: ",
-      viewGuidance: "View guidance",
-      noMatches: "No matching conditions found. Try another search.",
-      about: "About:",
-      symptoms: "Common symptoms:",
-      treatment: "Treatment / care:",
-      prevention: "Prevention:",
-      generalGuidance: "General guidance",
-      guideAdvice: "Review the Disease & Treatment Guide for general information. This prediction needs careful interpretation.",
-      healthy: "Healthy",
-      earlyBlight: "Early Blight",
-      lateBlight: "Late Blight",
-      leafMold: "Leaf Mold",
-      mosaicVirus: "Mosaic Virus",
-      targetSpot: "Target Spot",
-      healthyAdvice: "A healthy-looking leaf does not guarantee the entire plant is disease-free. Continue routine monitoring."
+      conf: "Model confidence: ", view: "View guidance", noMatch: "No matching conditions found. Try another search.",
+      about: "About:", symptoms: "Common symptoms:", treatment: "Treatment / care:", prevention: "Prevention:",
+      general: "General guidance",
+      guideAdvice: "Review the Disease & Treatment Guide for general information. This prediction needs careful interpretation."
     },
-
     hi: {
-      brandSubtitle: "पौधों के स्वास्थ्य और उपचार संबंधी सलाह",
-      dashboard: "▦ डैशबोर्ड",
-      analyze: "📷 पौधे की जाँच",
-      guide: "📖 रोग एवं उपचार गाइड",
-      tips: "🌱 सुझाव एवं बचाव",
-      sidebarTitle: "🌱 पौधों का स्वास्थ्य महत्वपूर्ण है",
-      sidebarText: "संभावित रोग की जाँच और देखभाल के सुझाव पाने के लिए पत्ती की साफ तस्वीर अपलोड करें।",
-      model: "मॉडल: MobileNetV2 (एकीकरण की योजना)",
-      breadcrumbDashboard: "डैशबोर्ड",
-      breadcrumbAnalyze: "पौधे की जाँच",
-      breadcrumbGuide: "रोग एवं उपचार गाइड",
-      breadcrumbTips: "सुझाव एवं बचाव",
-      theme: "🌙 थीम",
-      welcome: "लीफकेयर में आपका स्वागत है 🌱",
-      heading: "आइए, अपने पौधों को स्वस्थ रखें।",
+      lang: "English", dashboard: "डैशबोर्ड", analyze: "पौधे की जाँच", guide: "रोग एवं उपचार गाइड", tips: "सुझाव एवं बचाव",
+      brandSub: "पौधों के स्वास्थ्य और उपचार संबंधी सलाह", sideTitle: "🌱 पौधों का स्वास्थ्य महत्वपूर्ण है",
+      sideText: "संभावित रोग की जाँच और देखभाल के सुझाव पाने के लिए पत्ती की साफ तस्वीर अपलोड करें।",
+      model: "मॉडल: MobileNetV2 (एकीकरण की योजना)", theme: "🌙 थीम",
+      welcome: "लीफकेयर में आपका स्वागत है 🌱", heading: "आइए, अपने पौधों को स्वस्थ रखें।",
       intro: "पौधों के रोगों की जानकारी लें, पत्तियों की तस्वीर अपलोड करें और संभावित उपचार जानें।",
-      check: "अपने पौधे की जाँच करें",
-      choose: "शुरू करने के लिए पत्ती की तस्वीर चुनें।",
-      start: "＋ पौधे की जाँच करें",
-      supportedDiseases: "समर्थित रोग श्रेणियाँ",
-      supportedCrops: "समर्थित फसलें",
-      analyses: "किए गए विश्लेषण",
-      how: "लीफकेयर कैसे काम करता है",
-      step1: "पौधे की पत्ती की साफ तस्वीर अपलोड करें।",
-      step2: "जुड़ा हुआ AI मॉडल संभावित स्थिति की पहचान करता है।",
-      step3: "विश्वास स्कोर और सलाह संबंधी जानकारी देखें।",
-      step4: "उचित बचाव और देखभाल के उपाय अपनाएँ।",
-      backendInfo: "तस्वीर से रोग पहचानने के लिए बैकएंड मॉडल चालू होना चाहिए। गाइड और अन्य वेबसाइट सुविधाएँ इसके बिना भी देखी जा सकती हैं।",
-      recent: "हाल की गतिविधियाँ",
-      noHistory: "अभी तक कोई विश्लेषण नहीं हुआ है।",
-      clearHistory: "इतिहास साफ करें",
-      analyzeHeading: "पौधे की जाँच",
-      analyzeIntro: "अपने जुड़े हुए मॉडल से जाँच कराने के लिए पत्ती की तस्वीर अपलोड करें।",
-      upload: "🍃 पत्ती की तस्वीर अपलोड करें",
-      uploadHelp: "एक पत्ती की साफ और स्पष्ट तस्वीर चुनें।",
-      noImage: "कोई तस्वीर नहीं चुनी गई है।",
-      analyzeButton: "पत्ती की जाँच करें",
-      result: "जाँच का परिणाम",
+      check: "अपने पौधे की जाँच करें", choose: "शुरू करने के लिए पत्ती की तस्वीर चुनें।", start: "＋ पौधे की जाँच करें",
+      st1: "समर्थित रोग श्रेणियाँ", st2: "समर्थित फसलें", st3: "किए गए विश्लेषण",
+      tag1: "🌿 सरल और स्मार्ट", how: "लीफकेयर कैसे काम करता है", howSub: "पत्ती की तस्वीर से स्वस्थ पौधों तक, चार आसान चरणों में।", step: "चरण",
+      s1t: "तस्वीर लें", s1d: "अपने पौधे की पत्ती की साफ तस्वीर अपलोड करें।",
+      s2t: "जाँच करें", s2d: "हमारा जुड़ा हुआ AI मॉडल संभावित स्थिति का अनुमान लगाता है।",
+      s3t: "समझें", s3d: "विश्वास स्कोर और देखभाल के सुझाव देखें।",
+      s4t: "कदम उठाएँ", s4d: "उचित बचाव और पौधों की देखभाल के उपाय अपनाएँ।",
+      tag2: "🌱 आपके पौधे की यात्रा", recent: "हाल की गतिविधि", recentSub: "अपने पौधों की स्वास्थ्य जाँच का रिकॉर्ड रखें।",
+      total: "कुल जाँच", noHistory: "🌿 अभी तक कोई जाँच नहीं हुई। आपकी जाँच यहाँ दिखाई देंगी।", clear: "इतिहास साफ करें",
+      aHead: "पौधे की जाँच", aIntro: "अपने जुड़े हुए मॉडल से जाँच कराने के लिए पत्ती की तस्वीर अपलोड करें।",
+      upload: "🍃 पत्ती की तस्वीर अपलोड करें", uploadHelp: "एक पत्ती की साफ और स्पष्ट तस्वीर चुनें।",
+      noImage: "कोई तस्वीर नहीं चुनी गई है।", analyzeBtn: "पत्ती की जाँच करें", result: "जाँच का परिणाम",
       notice: "जाँच का बटन आपके बैकएंड http://127.0.0.1:8000/predict से जुड़ता है। वास्तविक परिणामों के लिए FastAPI मॉडल बैकएंड चालू होना चाहिए।",
-      guideHeading: "रोग एवं उपचार गाइड",
-      guideIntro: "आलू और टमाटर की फसलों की स्थितियों, लक्षणों, उपचार और बचाव के बारे में जानें।",
-      search: "रोग, फसल या लक्षण खोजें...",
-      allCrops: "सभी फसलें",
-      potato: "🥔 आलू",
-      tomato: "🍅 टमाटर",
-      treatmentHeading: "उपचार एवं बचाव की जानकारी",
-      guideNotice: "यह सामान्य शैक्षिक जानकारी है, पक्की बीमारी की पहचान नहीं। कीटनाशक या फफूंदनाशक इस्तेमाल करने से पहले स्थानीय कृषि विशेषज्ञ से उत्पाद, मात्रा और सुरक्षा संबंधी निर्देशों की पुष्टि करें।",
-      tipsHeading: "सुझाव एवं बचाव",
-      tipsIntro: "अच्छी देखभाल से पौधों में कई रोगों का खतरा कम हो सकता है।",
+      gHead: "रोग एवं उपचार गाइड",
+      gIntro: "आलू और टमाटर की फसलों की स्थितियों, लक्षणों, उपचार और बचाव के बारे में जानें।",
+      search: "रोग, फसल या लक्षण खोजें...", all: "सभी फसलें", potato: "🥔 आलू", tomato: "🍅 टमाटर",
+      tHead: "उपचार एवं बचाव की जानकारी",
+      gNotice: "यह सामान्य शैक्षिक जानकारी है, पक्की बीमारी की पहचान नहीं। कीटनाशक या फफूंदनाशक इस्तेमाल करने से पहले स्थानीय कृषि विशेषज्ञ से उत्पाद, मात्रा और सुरक्षा संबंधी निर्देशों की पुष्टि करें।",
+      tipsHead: "सुझाव एवं बचाव", tipsIntro: "अच्छी देखभाल से पौधों में कई रोगों का खतरा कम हो सकता है।",
       footer: "लीफकेयर — पौधों के रोगों की पहचान और देखभाल संबंधी सलाह",
-      languageButton: "English",
-      selected: "चुनी गई तस्वीर: ",
-      noImageAlert: "कृपया पहले पत्ती की तस्वीर चुनें।",
-      invalidImage: "कृपया तस्वीर वाली फ़ाइल चुनें।",
-      analyzing: "तस्वीर की जाँच हो रही है...",
-      analyzingError: "तस्वीर की जाँच नहीं हो सकी।",
+      selected: "चुनी गई तस्वीर: ", noImageAlert: "कृपया पहले पत्ती की तस्वीर चुनें।", invalid: "कृपया तस्वीर वाली फ़ाइल चुनें।",
+      analyzing: "तस्वीर की जाँच हो रही है...", error: "तस्वीर की जाँच नहीं हो सकी।",
       backendError: "जाँचें कि LeafCare बैकएंड http://127.0.0.1:8000 पर चल रहा है और POST /predict का समर्थन करता है।",
-      modelConfidence: "मॉडल का विश्वास स्कोर: ",
-      viewGuidance: "सलाह देखें",
-      noMatches: "इस खोज से मेल खाती स्थिति नहीं मिली। दूसरी खोज आज़माएँ।",
-      about: "जानकारी:",
-      symptoms: "सामान्य लक्षण:",
-      treatment: "उपचार / देखभाल:",
-      prevention: "बचाव:",
-      generalGuidance: "सामान्य सलाह",
-      guideAdvice: "सामान्य जानकारी के लिए रोग एवं उपचार गाइड देखें। इस अनुमान का सावधानीपूर्वक मूल्यांकन करें।",
-      healthy: "स्वस्थ",
-      earlyBlight: "अर्ली ब्लाइट (प्रारंभिक झुलसा)",
-      lateBlight: "लेट ब्लाइट (पछेती झुलसा)",
-      leafMold: "पत्ती फफूंद रोग",
-      mosaicVirus: "मोज़ेक वायरस",
-      targetSpot: "टारगेट स्पॉट (लक्ष्याकार धब्बे)",
-      healthyAdvice: "पत्ती स्वस्थ दिखने का अर्थ यह नहीं है कि पूरा पौधा रोगमुक्त है। नियमित जाँच करते रहें।"
+      conf: "मॉडल का विश्वास स्कोर: ", view: "सलाह देखें", noMatch: "इस खोज से मेल खाती स्थिति नहीं मिली। दूसरी खोज आज़माएँ।",
+      about: "जानकारी:", symptoms: "सामान्य लक्षण:", treatment: "उपचार / देखभाल:", prevention: "बचाव:",
+      general: "सामान्य सलाह",
+      guideAdvice: "सामान्य जानकारी के लिए रोग एवं उपचार गाइड देखें। इस अनुमान का सावधानीपूर्वक मूल्यांकन करें।"
     }
   };
 
+  const NAMES = {
+    "Early Blight": "अर्ली ब्लाइट (प्रारंभिक झुलसा)", "Late Blight": "लेट ब्लाइट (पछेती झुलसा)", "Healthy": "स्वस्थ",
+    "Leaf Mold": "पत्ती फफूंद रोग", "Mosaic Virus": "मोज़ेक वायरस", "Target Spot": "टारगेट स्पॉट (लक्ष्याकार धब्बे)"
+  };
+  const CROPS = { Potato: "आलू", Tomato: "टमाटर" };
+  const EMOJI = { Potato: "🥔", Tomato: "🍅" };
+
+  /* ---------- Disease knowledge base ---------- */
   const diseases = [
     {
-      crop:"Potato", name:"Early Blight", emoji:"🥔",
-      symptoms:"Brown spots, often with concentric rings, on older leaves. Yellowing may appear around the spots.",
-      about:"Early blight is a fungal disease associated with Alternaria species. Symptoms and severity can vary with weather and crop conditions.",
-      treatment:["Remove badly affected leaves where practical and dispose of infected plant material appropriately.","Avoid wetting foliage when watering.","If the disease continues to spread, ask a local agriculture professional about an approved fungicide and its label instructions."],
-      prevention:["Rotate crops where possible.","Maintain suitable spacing and airflow.","Avoid leaving infected plant debris around the crop."]
+      crop: "Potato", name: "Early Blight",
+      symptoms: "Brown spots, often with concentric rings, on older leaves. Yellowing may appear around the spots.",
+      about: "Early blight is a fungal disease associated with Alternaria species. Symptoms and severity can vary with weather and crop conditions.",
+      treatment: ["Remove badly affected leaves where practical and dispose of infected plant material appropriately.", "Avoid wetting foliage when watering.", "If the disease continues to spread, ask a local agriculture professional about an approved fungicide and its label instructions."],
+      prevention: ["Rotate crops where possible.", "Maintain suitable spacing and airflow.", "Avoid leaving infected plant debris around the crop."]
     },
     {
-      crop:"Potato", name:"Late Blight", emoji:"🥔",
-      symptoms:"Water-soaked-looking dark patches that can enlarge quickly, sometimes with pale growth near lesion edges in humid conditions.",
-      about:"Late blight is a serious disease caused by Phytophthora infestans. It can spread rapidly in cool, wet conditions.",
-      treatment:["Remove and dispose of affected plants according to local agricultural guidance.","Avoid moving infected plant material through the field.","Contact an agriculture officer promptly for locally approved disease-management advice."],
-      prevention:["Inspect crops regularly, especially during wet weather.","Use healthy planting material and suitable resistant varieties where available.","Follow local disease alerts and recommended crop-protection guidance."]
+      crop: "Potato", name: "Late Blight",
+      symptoms: "Water-soaked-looking dark patches that can enlarge quickly, sometimes with pale growth near lesion edges in humid conditions.",
+      about: "Late blight is a serious disease caused by Phytophthora infestans. It can spread rapidly in cool, wet conditions.",
+      treatment: ["Remove and dispose of affected plants according to local agricultural guidance.", "Avoid moving infected plant material through the field.", "Contact an agriculture officer promptly for locally approved disease-management advice."],
+      prevention: ["Inspect crops regularly, especially during wet weather.", "Use healthy planting material and suitable resistant varieties where available.", "Follow local disease alerts and recommended crop-protection guidance."]
     },
     {
-      crop:"Potato", name:"Healthy", emoji:"🥔",
-      symptoms:"Leaves generally have an even green colour and no obvious expanding lesions or unusual patterns.",
-      about:"A healthy-looking leaf does not guarantee the entire plant is disease-free. Continue routine monitoring.",
-      treatment:["No disease treatment is indicated by appearance alone.","Continue normal crop care and investigate any new symptoms."],
-      prevention:["Provide appropriate sunlight and watering.","Maintain good soil drainage and nutrition.","Inspect both sides of leaves regularly."]
+      crop: "Potato", name: "Healthy",
+      symptoms: "Leaves generally have an even green colour and no obvious expanding lesions or unusual patterns.",
+      about: "A healthy-looking leaf does not guarantee the entire plant is disease-free. Continue routine monitoring.",
+      treatment: ["No disease treatment is indicated by appearance alone.", "Continue normal crop care and investigate any new symptoms."],
+      prevention: ["Provide appropriate sunlight and watering.", "Maintain good soil drainage and nutrition.", "Inspect both sides of leaves regularly."]
     },
     {
-      crop:"Tomato", name:"Healthy", emoji:"🍅",
-      symptoms:"Leaves generally show normal colour and growth without obvious disease lesions or abnormal patterns.",
-      about:"Healthy-looking leaves are a positive sign, but regular plant monitoring is still important.",
-      treatment:["No disease treatment is indicated by appearance alone.","Continue routine care and watch for changes."],
-      prevention:["Water near the soil instead of repeatedly wetting leaves.","Provide suitable spacing and sunlight.","Check plants regularly for pests and symptoms."]
+      crop: "Tomato", name: "Healthy",
+      symptoms: "Leaves generally show normal colour and growth without obvious disease lesions or abnormal patterns.",
+      about: "Healthy-looking leaves are a positive sign, but regular plant monitoring is still important.",
+      treatment: ["No disease treatment is indicated by appearance alone.", "Continue routine care and watch for changes."],
+      prevention: ["Water near the soil instead of repeatedly wetting leaves.", "Provide suitable spacing and sunlight.", "Check plants regularly for pests and symptoms."]
     },
     {
-      crop:"Tomato", name:"Leaf Mold", emoji:"🍅",
-      symptoms:"Yellowish patches on the upper leaf surface may occur with olive-green or brownish growth underneath in humid conditions.",
-      about:"Tomato leaf mold is associated with the fungus Passalora fulva and is favoured by high humidity.",
-      treatment:["Remove heavily affected leaves when practical.","Improve ventilation and avoid prolonged leaf wetness.","Ask a local agriculture professional about approved control products if the disease persists."],
-      prevention:["Increase airflow between plants.","Use watering practices that keep foliage as dry as practical.","Manage greenhouse or growing-area humidity where possible."]
+      crop: "Tomato", name: "Leaf Mold",
+      symptoms: "Yellowish patches on the upper leaf surface may occur with olive-green or brownish growth underneath in humid conditions.",
+      about: "Tomato leaf mold is associated with the fungus Passalora fulva and is favoured by high humidity.",
+      treatment: ["Remove heavily affected leaves when practical.", "Improve ventilation and avoid prolonged leaf wetness.", "Ask a local agriculture professional about approved control products if the disease persists."],
+      prevention: ["Increase airflow between plants.", "Use watering practices that keep foliage as dry as practical.", "Manage greenhouse or growing-area humidity where possible."]
     },
     {
-      crop:"Tomato", name:"Mosaic Virus", emoji:"🍅",
-      symptoms:"Mottled light and dark green leaf patterns, distortion, or unusual leaf growth may occur.",
-      about:"Mosaic-like symptoms can be associated with plant viruses, but visual symptoms alone cannot confirm which virus is present.",
-      treatment:["There is generally no curative treatment for a plant once a viral infection is established.","Isolate suspicious plants where practical and seek local agricultural guidance.","Clean tools and handle plants carefully to reduce mechanical spread."],
-      prevention:["Use healthy seeds and planting material.","Control relevant insect vectors when advised by local experts.","Clean tools and wash hands after handling suspicious plants."]
+      crop: "Tomato", name: "Mosaic Virus",
+      symptoms: "Mottled light and dark green leaf patterns, distortion, or unusual leaf growth may occur.",
+      about: "Mosaic-like symptoms can be associated with plant viruses, but visual symptoms alone cannot confirm which virus is present.",
+      treatment: ["There is generally no curative treatment for a plant once a viral infection is established.", "Isolate suspicious plants where practical and seek local agricultural guidance.", "Clean tools and handle plants carefully to reduce mechanical spread."],
+      prevention: ["Use healthy seeds and planting material.", "Control relevant insect vectors when advised by local experts.", "Clean tools and wash hands after handling suspicious plants."]
     },
     {
-      crop:"Tomato", name:"Target Spot", emoji:"🍅",
-      symptoms:"Circular brown leaf lesions may develop concentric rings, sometimes giving a target-like appearance.",
-      about:"Target spot is associated with the fungus Corynespora cassiicola. Other conditions can produce similar spots.",
-      treatment:["Remove severely affected foliage where practical.","Avoid overhead watering and improve airflow.","Seek local advice about approved fungicides if the disease is spreading."],
-      prevention:["Inspect leaves regularly.","Avoid excessive foliage wetness.","Maintain suitable plant spacing and remove crop debris."]
+      crop: "Tomato", name: "Target Spot",
+      symptoms: "Circular brown leaf lesions may develop concentric rings, sometimes giving a target-like appearance.",
+      about: "Target spot is associated with the fungus Corynespora cassiicola. Other conditions can produce similar spots.",
+      treatment: ["Remove severely affected foliage where practical.", "Avoid overhead watering and improve airflow.", "Seek local advice about approved fungicides if the disease is spreading."],
+      prevention: ["Inspect leaves regularly.", "Avoid excessive foliage wetness.", "Maintain suitable plant spacing and remove crop debris."]
     }
   ];
 
-  const tips = [
-    ["💧","Water carefully","Water near the soil and avoid repeatedly wetting leaves, especially late in the day."],
-    ["☀️","Provide suitable sunlight","Follow the light requirements of your crop and avoid overcrowding plants."],
-    ["🔎","Inspect leaves regularly","Look at both sides of leaves and check for new spots, discolouration, or unusual growth."],
-    ["🌬️","Improve airflow","Suitable spacing can help foliage dry faster and reduce conditions favourable to some diseases."],
-    ["🧹","Keep the growing area clean","Remove diseased plant debris appropriately and clean tools between plants."],
-    ["🌱","Use healthy planting material","Choose healthy seeds or seedlings and use locally suitable varieties where available."]
+    const tips = [
+    ["💧", "Water carefully", "Water near the soil and avoid repeatedly wetting leaves, especially late in the day.",
+           "सावधानी से पानी दें", "पानी पौधे की जड़ के पास दें और पत्तियों को बार-बार गीला करने से बचें, खासकर दिन के आख़िरी समय में।"],
+    ["☀️", "Provide suitable sunlight", "Follow the light requirements of your crop and avoid overcrowding plants.",
+           "उचित धूप दें", "अपनी फसल की धूप संबंधी ज़रूरत का ध्यान रखें और पौधों को ज़्यादा पास-पास न लगाएँ।"],
+    ["🔎", "Inspect leaves regularly", "Look at both sides of leaves and check for new spots, discolouration, or unusual growth.",
+           "पत्तियों की नियमित जाँच करें", "पत्तियों के दोनों ओर देखें और नए धब्बे, रंग बदलना या असामान्य बढ़वार पर नज़र रखें।"],
+    ["🌬️", "Improve airflow", "Suitable spacing can help foliage dry faster and reduce conditions favourable to some diseases.",
+           "हवा का आवागमन बढ़ाएँ", "उचित दूरी रखने से पत्तियाँ जल्दी सूखती हैं और कुछ रोगों के लिए अनुकूल स्थितियाँ कम होती हैं।"],
+    ["🧹", "Keep the growing area clean", "Remove diseased plant debris appropriately and clean tools between plants.",
+           "उगाने की जगह साफ रखें", "रोगग्रस्त पौधों के अवशेष उचित तरीके से हटाएँ और एक पौधे से दूसरे पर जाने से पहले औज़ार साफ करें।"],
+    ["🌱", "Use healthy planting material", "Choose healthy seeds or seedlings and use locally suitable varieties where available.",
+           "स्वस्थ बीज और पौध इस्तेमाल करें", "स्वस्थ बीज या पौध चुनें और जहाँ उपलब्ध हों, स्थानीय रूप से उपयुक्त किस्में लगाएँ।"]
   ];
 
-  const $ = selector => document.querySelector(selector);
-  const $$ = selector => document.querySelectorAll(selector);
+  /* ---------- Helpers ---------- */
+  const t = () => T[lang];
+  const cropName = c => lang === "hi" ? CROPS[c] : c;
+  const diseaseName = n => lang === "hi" ? NAMES[n] || n : n;
+  const ul = items => "<ul>" + items.map(i => `<li>${i}</li>`).join("") + "</ul>";
+  const norm = s => s.toLowerCase().replace(/[_\s]+/g, " ").trim();
 
-  function showPage(pageId) {
-    $$(".page").forEach(page => page.classList.remove("active"));
-    $$("nav button").forEach(button => {
-      button.classList.toggle("active", button.dataset.page === pageId);
-    });
+  const setMsg = () => $("#uploadMessage").textContent = img ? t().selected + img.name : t().noImage;
+  const setBreadcrumb = () => $("#breadcrumb").textContent = $("nav .active span").textContent;
+  const countScans = () => $("#scanCount").textContent = $("#activityCount").textContent = $$("#history li:not(.muted)").length;
 
-    const page = document.getElementById(pageId);
-    const navButton = document.querySelector(
-      'nav button[data-page="' + pageId + '"]'
-    );
-
-    if (page) page.classList.add("active");
-    if (navButton) $("#breadcrumb").textContent = navButton.textContent.trim();
-
-    $(".content").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function cropName(crop) {
-    if (currentLanguage === "hi") {
-      if (crop === "Potato") return "आलू";
-      if (crop === "Tomato") return "टमाटर";
-      if (crop === "All") return "सभी फसलें";
-    }
-    return crop;
-  }
-
-  function diseaseName(name) {
-    if (currentLanguage !== "hi") return name;
-
-    const t = translations.hi;
-    const names = {
-      "Early Blight": t.earlyBlight,
-      "Late Blight": t.lateBlight,
-      "Healthy": t.healthy,
-      "Leaf Mold": t.leafMold,
-      "Mosaic Virus": t.mosaicVirus,
-      "Target Spot": t.targetSpot
-    };
-
-    return names[name] || name;
+  function i18n() {
+    document.documentElement.lang = lang;
+    $$("[data-i18n]").forEach(e => e.textContent = t()[e.dataset.i18n]);
+    $("#searchInput").placeholder = t().search;
+    setBreadcrumb();
+    setMsg();
   }
 
   function renderGuide() {
-    const search = $("#searchInput").value.toLowerCase().trim();
+    const q = $("#searchInput").value.toLowerCase().trim(), x = t();
+    const list = diseases.filter(d =>
+      (crop === "All" || d.crop === crop) &&
+      [d.crop, d.name, d.symptoms, d.about, ...d.treatment, ...d.prevention].join(" ").toLowerCase().includes(q));
 
-    const filtered = diseases.filter(d => {
-      const matchesCrop = currentCrop === "All" || d.crop === currentCrop;
-      const text = [
-        d.crop, d.name, d.symptoms, d.about,
-        ...d.treatment, ...d.prevention
-      ].join(" ").toLowerCase();
+    $("#diseaseList").innerHTML = list.length ? list.map((d, i) => `
+      <article class="disease-card">
+        <div class="emoji">${EMOJI[d.crop]}</div>
+        <p>${cropName(d.crop)}</p><h3>${diseaseName(d.name)}</h3><p>${d.symptoms}</p>
+        <button class="primary" data-open="${i}">${x.view}</button>
+      </article>`).join("") : `<p>${x.noMatch}</p>`;
 
-      return matchesCrop && text.includes(search);
-    });
+    $("#treatmentList").innerHTML = list.map((d, i) => `
+      <details id="d${i}">
+        <summary>${cropName(d.crop)} — ${diseaseName(d.name)}</summary>
+        <p><strong>${x.about}</strong> ${d.about}</p>
+        <p><strong>${x.symptoms}</strong> ${d.symptoms}</p>
+        <p><strong>${x.treatment}</strong></p>${ul(d.treatment)}
+        <p><strong>${x.prevention}</strong></p>${ul(d.prevention)}
+      </details>`).join("");
 
-    const cards = $("#diseaseList");
-    const treatment = $("#treatmentList");
-    const t = translations[currentLanguage];
-
-    cards.innerHTML = "";
-    treatment.innerHTML = "";
-
-    if (!filtered.length) {
-      cards.innerHTML = "<p>" + t.noMatches + "</p>";
-      return;
-    }
-
-    filtered.forEach((d, index) => {
-      const card = document.createElement("article");
-      card.className = "disease-card";
-
-      const emoji = document.createElement("div");
-      emoji.style.fontSize = "30px";
-      emoji.textContent = d.emoji;
-
-      const crop = document.createElement("p");
-      crop.textContent = cropName(d.crop);
-
-      const heading = document.createElement("h3");
-      heading.textContent = diseaseName(d.name);
-
-      const symptoms = document.createElement("p");
-      symptoms.textContent = d.symptoms;
-
-      const button = document.createElement("button");
-      button.className = "primary";
-      button.type = "button";
-      button.textContent = t.viewGuidance;
-
-      card.append(emoji, crop, heading, symptoms, button);
-
-      const detail = document.createElement("details");
-      detail.id = "details-" + index;
-
-      const summary = document.createElement("summary");
-      summary.textContent = cropName(d.crop) + " — " + diseaseName(d.name);
-      detail.appendChild(summary);
-
-      const about = document.createElement("p");
-      const aboutLabel = document.createElement("strong");
-      aboutLabel.textContent = t.about + " ";
-      about.append(aboutLabel, document.createTextNode(d.about));
-      detail.appendChild(about);
-
-      const symptomParagraph = document.createElement("p");
-      const symptomLabel = document.createElement("strong");
-      symptomLabel.textContent = t.symptoms + " ";
-      symptomParagraph.append(symptomLabel, document.createTextNode(d.symptoms));
-      detail.appendChild(symptomParagraph);
-
-      const treatmentTitle = document.createElement("p");
-      const treatmentLabel = document.createElement("strong");
-      treatmentLabel.textContent = t.treatment;
-      treatmentTitle.appendChild(treatmentLabel);
-      detail.appendChild(treatmentTitle);
-
-      const treatmentUl = document.createElement("ul");
-      d.treatment.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        treatmentUl.appendChild(li);
-      });
-      detail.appendChild(treatmentUl);
-
-      const preventionTitle = document.createElement("p");
-      const preventionLabel = document.createElement("strong");
-      preventionLabel.textContent = t.prevention;
-      preventionTitle.appendChild(preventionLabel);
-      detail.appendChild(preventionTitle);
-
-      const preventionUl = document.createElement("ul");
-      d.prevention.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        preventionUl.appendChild(li);
-      });
-      detail.appendChild(preventionUl);
-
-      button.addEventListener("click", () => {
-        detail.open = true;
-        detail.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-
-      cards.appendChild(card);
-      treatment.appendChild(detail);
+    $$("[data-open]").forEach(b => b.onclick = () => {
+      const d = $("#d" + b.dataset.open);
+      d.open = true;
+      d.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   }
-
   function renderTips() {
-    const list = $("#tipsList");
-    list.innerHTML = "";
-
-    tips.forEach(tip => {
-      const card = document.createElement("article");
-      card.className = "disease-card";
-
-      const emoji = document.createElement("div");
-      emoji.style.fontSize = "30px";
-      emoji.textContent = tip[0];
-
-      const heading = document.createElement("h3");
-      heading.textContent = tip[1];
-
-      const description = document.createElement("p");
-      description.textContent = tip[2];
-
-      card.append(emoji, heading, description);
-      list.appendChild(card);
-    });
+    const i = lang === "hi" ? 3 : 1;   // position of the title in each tip (3 = Hindi, 1 = English)
+    $("#tipsList").innerHTML = tips.map(tip =>
+      `<article class="disease-card"><div class="emoji">${tip[0]}</div><h3>${tip[i]}</h3><p>${tip[i + 1]}</p></article>`
+    ).join("");
+  }
+  function showPage(id) {
+    $$(".page").forEach(p => p.classList.toggle("active", p.id === id));
+    $$("nav button").forEach(b => b.classList.toggle("active", b.dataset.page === id));
+    setBreadcrumb();
+    $(".content").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function applyLanguage() {
-    const t = translations[currentLanguage];
-    document.documentElement.lang = currentLanguage;
+  /* ---------- Events ---------- */
+  $$("nav button").forEach(b => b.onclick = () => showPage(b.dataset.page));
+  $("#startAnalyze").onclick = () => showPage("analyze");
+  $("#themeButton").onclick = () => document.body.classList.toggle("dark");
+  $("#languageButton").onclick = () => { lang = lang === "en" ? "hi" : "en"; i18n(); renderGuide(); renderTips(); };
+  $("#searchInput").oninput = renderGuide;
 
-    $("#languageButton").textContent = t.languageButton;
-
-    $$("nav button").forEach(button => {
-      const key = button.dataset.page;
-      button.textContent = t[key] || button.textContent;
-    });
-
-    $(".brand small").textContent = t.brandSubtitle;
-    $(".sidebar-note strong").textContent = t.sidebarTitle;
-
-    const sidebarParagraphs = $$(".sidebar-note p");
-    if (sidebarParagraphs[0]) sidebarParagraphs[0].textContent = t.sidebarText;
-    if (sidebarParagraphs[1]) sidebarParagraphs[1].textContent = t.model;
-
-    $("#themeButton").textContent = t.theme;
-
-    const activePage = $(".page.active");
-    if (activePage) {
-      const breadcrumbKeys = {
-        dashboard: "breadcrumbDashboard",
-        analyze: "breadcrumbAnalyze",
-        guide: "breadcrumbGuide",
-        tips: "breadcrumbTips"
-      };
-      $("#breadcrumb").textContent = t[breadcrumbKeys[activePage.id]];
-    }
-
-    // Dashboard
-    $("#dashboard > p.green").textContent = t.welcome;
-    $("#dashboard h1").textContent = t.heading;
-
-    const dashboardParagraphs = $$("#dashboard > p.muted");
-    if (dashboardParagraphs[0]) dashboardParagraphs[0].textContent = t.intro;
-
-    const panels = $$("#dashboard .panel");
-
-    if (panels[0]) {
-      panels[0].querySelector("h2").textContent = t.check;
-      panels[0].querySelector("p").textContent = t.choose;
-      $("#startAnalyze").textContent = t.start;
-    }
-
-    const stats = $$("#dashboard .stat");
-    if (stats[0]) stats[0].lastChild.textContent = " " + t.supportedDiseases;
-    if (stats[1]) stats[1].lastChild.textContent = " " + t.supportedCrops;
-    if (stats[2]) stats[2].lastChild.textContent = " " + t.analyses;
-
-    if (panels[1]) {
-      panels[1].querySelector("h2").textContent = t.how;
-      panels[1].querySelectorAll("ol li").forEach((item, index) => {
-        item.textContent = [t.step1, t.step2, t.step3, t.step4][index];
-      });
-      panels[1].querySelector("p.muted").textContent = t.backendInfo;
-    }
-
-    if (panels[2]) {
-      panels[2].querySelector("h2").textContent = t.recent;
-      const empty = $("#history .muted");
-      if (empty) empty.textContent = t.noHistory;
-      $("#clearHistory").textContent = t.clearHistory;
-    }
-
-    // Analyze page
-    $("#analyze h1").textContent = t.analyzeHeading;
-    $("#analyze > p.muted").textContent = t.analyzeIntro;
-    $("#analyze .upload h2").textContent = t.upload;
-    $("#analyze .upload p").textContent = t.uploadHelp;
-    $("#uploadMessage").textContent = selectedImage
-      ? t.selected + selectedImage.name
-      : t.noImage;
-    $("#analyzeButton").textContent = t.analyzeButton;
-    $("#resultPanel h2").textContent = t.result;
-    $("#analyze .notice").textContent = t.notice;
-
-    // Guide page
-    $("#guide h1").textContent = t.guideHeading;
-    $("#guide > p.muted").textContent = t.guideIntro;
-    $("#searchInput").placeholder = t.search;
-
-    const filters = $$("#guide .filter");
-    if (filters[0]) filters[0].textContent = t.allCrops;
-    if (filters[1]) filters[1].textContent = t.potato;
-    if (filters[2]) filters[2].textContent = t.tomato;
-
-    $("#guide h2").textContent = t.treatmentHeading;
-    $("#guide .notice").textContent = t.guideNotice;
-
-    // Tips and footer
-    $("#tips h1").textContent = t.tipsHeading;
-    $("#tips > p.muted").textContent = t.tipsIntro;
-    $("footer").textContent = t.footer;
-
+  $$(".filter").forEach(b => b.onclick = () => {
+    crop = b.dataset.crop;
+    $$(".filter").forEach(f => f.classList.toggle("active", f === b));
     renderGuide();
-    renderTips();
-  }
-
-  // Navigation
-  $$("nav button").forEach(button => {
-    button.addEventListener("click", () => showPage(button.dataset.page));
   });
 
-  $("#startAnalyze").addEventListener("click", () => showPage("analyze"));
-
-  // Theme toggle
-  $("#themeButton").addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-  });
-
-  // Hindi / English toggle
-  $("#languageButton").addEventListener("click", () => {
-    currentLanguage = currentLanguage === "en" ? "hi" : "en";
-    applyLanguage();
-  });
-
-  // Search and crop filters
-  $("#searchInput").addEventListener("input", renderGuide);
-
-  $$(".filter").forEach(button => {
-    button.addEventListener("click", () => {
-      currentCrop = button.dataset.crop;
-      $$(".filter").forEach(item => {
-        item.classList.toggle("active", item === button);
-      });
-      renderGuide();
-    });
-  });
-
-  // Image selection and preview
-  const imageInput = $("#imageInput");
-  const preview = $("#preview");
-
-  imageInput.addEventListener("change", () => {
-    selectedImage = imageInput.files[0] || null;
-
-    if (!selectedImage) {
-      preview.classList.add("hidden");
-      $("#uploadMessage").textContent = translations[currentLanguage].noImage;
-      return;
+  const input = $("#imageInput"), preview = $("#preview");
+  input.onchange = () => {
+    img = input.files[0] || null;
+    if (img && !img.type.startsWith("image/")) { alert(t().invalid); img = null; input.value = ""; }
+    if (preview.dataset.url) URL.revokeObjectURL(preview.dataset.url);
+    preview.classList.toggle("hidden", !img);
+    if (img) {
+      preview.src = preview.dataset.url = URL.createObjectURL(img);
+      $("#resultPanel").classList.add("hidden");
     }
+    setMsg();
+  };
 
-    if (!selectedImage.type.startsWith("image/")) {
-      alert(translations[currentLanguage].invalidImage);
-      selectedImage = null;
-      imageInput.value = "";
-      preview.classList.add("hidden");
-      $("#uploadMessage").textContent = translations[currentLanguage].noImage;
-      return;
-    }
-
-    if (preview.dataset.objectUrl) {
-      URL.revokeObjectURL(preview.dataset.objectUrl);
-    }
-
-    const objectUrl = URL.createObjectURL(selectedImage);
-    preview.dataset.objectUrl = objectUrl;
-    preview.src = objectUrl;
-    preview.classList.remove("hidden");
-
-    $("#uploadMessage").textContent =
-      translations[currentLanguage].selected + selectedImage.name;
-
-    $("#resultPanel").classList.add("hidden");
-  });
-
-  // Image analysis
-  $("#analyzeButton").addEventListener("click", async () => {
-    const t = translations[currentLanguage];
-
-    if (!selectedImage) {
-      alert(t.noImageAlert);
-      return;
-    }
-
-    const button = $("#analyzeButton");
-    button.disabled = true;
-    button.textContent = t.analyzing;
+  $("#analyzeButton").onclick = async () => {
+    const x = t(), btn = $("#analyzeButton");
+    if (!img) return alert(x.noImageAlert);
+    btn.disabled = true;
+    btn.textContent = x.analyzing;
 
     try {
-      const formData = new FormData();
+      const fd = new FormData();
+      fd.append("image", img);                       // field name expected by the backend
+      const res = await fetch(API_URL, { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Backend returned status " + res.status);
 
-      // Keep the original backend field name.
-      formData.append("image", selectedImage);
+      const data = await res.json();
+      const label = data.label || data.disease || data.prediction || data.class_name;
+      if (!label) throw new Error("The backend response did not include a disease label.");
 
-      const response = await fetch("http://127.0.0.1:8000/predict", {
-        method: "POST",
-        body: formData
-      });
+      let conf = Number(data.confidence ?? data.confidence_score ?? 0);
+      if (conf <= 1) conf *= 100;
 
-      if (!response.ok) {
-        throw new Error("Backend returned status " + response.status);
-      }
-
-      const data = await response.json();
-      const disease = data.label || data.disease ||
-        data.prediction || data.class_name;
-
-      if (!disease) {
-        throw new Error("The backend response did not include a disease label.");
-      }
-
-      const confidence = Number(
-        data.confidence ?? data.confidence_score ?? 0
-      );
-      const normalizedConfidence =
-        confidence <= 1 ? confidence * 100 : confidence;
+      const L = norm(label);
+      const match = diseases.find(d => L.includes(norm(d.crop)) && L.includes(norm(d.name))) ||
+                    diseases.find(d => L.includes(norm(d.name)));
 
       $("#resultImage").src = preview.src;
-      $("#resultDisease").textContent = disease;
-      $("#resultConfidence").textContent =
-        t.modelConfidence + normalizedConfidence.toFixed(1) + "%";
-
-      const matching = diseases.find(d =>
-        disease.toLowerCase().includes(d.name.toLowerCase()) ||
-        d.name.toLowerCase().includes(disease.toLowerCase())
-      );
-
-      const advice = $("#resultAdvice");
-      advice.innerHTML = "";
-
-      const adviceHeading = document.createElement("h3");
-      adviceHeading.textContent = matching
-        ? t.generalGuidance
-        : t.guideAdvice;
-      advice.appendChild(adviceHeading);
-
-      if (matching) {
-        const about = document.createElement("p");
-        about.textContent = matching.about;
-        advice.appendChild(about);
-
-        const list = document.createElement("ul");
-        matching.treatment.forEach(item => {
-          const li = document.createElement("li");
-          li.textContent = item;
-          list.appendChild(li);
-        });
-        advice.appendChild(list);
-      } else {
-        const message = document.createElement("p");
-        message.textContent = t.guideAdvice;
-        advice.appendChild(message);
-      }
-
+      $("#resultDisease").textContent = label;
+      $("#resultConfidence").textContent = x.conf + conf.toFixed(1) + "%";
+      $("#resultAdvice").innerHTML = match
+        ? `<h3>${x.general}</h3><p>${match.about}</p>${ul(match.treatment)}`
+        : `<p>${x.guideAdvice}</p>`;
       $("#resultPanel").classList.remove("hidden");
 
-      scans++;
-      $("#scanCount").textContent = scans;
-
       const history = $("#history");
-      const empty = history.querySelector(".muted");
-      if (empty) history.innerHTML = "";
-
-      const item = document.createElement("li");
-      item.textContent = new Date().toLocaleString() + " — " + disease;
-      history.prepend(item);
-
-    } catch (error) {
-      alert(
-        t.analyzingError + "\n\n" +
-        t.backendError + "\n\nDetails: " + error.message
-      );
+      history.querySelector(".muted")?.remove();
+      const li = document.createElement("li");
+      li.textContent = new Date().toLocaleString() + " — " + label;
+      history.prepend(li);
+      countScans();
+    } catch (e) {
+      alert(x.error + "\n\n" + x.backendError + "\n\nDetails: " + e.message);
     } finally {
-      button.disabled = false;
-      button.textContent = translations[currentLanguage].analyzeButton;
+      btn.disabled = false;
+      btn.textContent = t().analyzeBtn;
     }
-  });
+  };
 
-  // Clear history
-  $("#clearHistory").addEventListener("click", () => {
-    $("#history").innerHTML =
-      '<li class="muted">' + translations[currentLanguage].noHistory + "</li>";
-    scans = 0;
-    $("#scanCount").textContent = "0";
-  });
+  $("#clearHistory").onclick = () => {
+    $("#history").innerHTML = '<li class="muted" data-i18n="noHistory"></li>';
+    i18n();
+    countScans();
+  };
 
-  // Initial rendering
-  renderGuide();
+  /* ---------- Start ---------- */
   renderTips();
-  applyLanguage();
+  i18n();
+  renderGuide();
+  countScans();
 });
