@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_URL = "https://leafcare-plant-disease-detection.onrender.com";
+  const API_URL = "https://leafcare-plant-disease-detection.onrender.com/predict";
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
   let lang = "en", crop = "All", img = null;
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       aHead: "Analyze Plant", aIntro: "Upload a leaf photograph for analysis by your connected model.",
       upload: "🍃 Upload a leaf image", uploadHelp: "Use a clear photograph with one leaf in focus.",
       noImage: "No image selected.", analyzeBtn: "Analyze leaf", result: "Analysis result",
-      notice: "The Analyze button connects to http://127.0.0.1:8000/predict. You must run your own compatible FastAPI model backend for real predictions.",
+      notice: "Upload a leaf image to receive a prediction from the LeafCare AI model.",
       gHead: "Disease & Treatment Guide",
       gIntro: "Explore the supported potato and tomato conditions, their symptoms, treatment options, and prevention.",
       search: "Search by disease, crop, or symptom...", all: "All crops", potato: "🥔 Potato", tomato: "🍅 Tomato",
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       aHead: "पौधे की जाँच", aIntro: "अपने जुड़े हुए मॉडल से जाँच कराने के लिए पत्ती की तस्वीर अपलोड करें।",
       upload: "🍃 पत्ती की तस्वीर अपलोड करें", uploadHelp: "एक पत्ती की साफ और स्पष्ट तस्वीर चुनें।",
       noImage: "कोई तस्वीर नहीं चुनी गई है।", analyzeBtn: "पत्ती की जाँच करें", result: "जाँच का परिणाम",
-      notice: "जाँच का बटन आपके बैकएंड http://127.0.0.1:8000/predict से जुड़ता है। वास्तविक परिणामों के लिए FastAPI मॉडल बैकएंड चालू होना चाहिए।",
+      notice: "पत्ती की तस्वीर अपलोड करें और LeafCare AI मॉडल से रोग का अनुमान प्राप्त करें।",
       gHead: "रोग एवं उपचार गाइड",
       gIntro: "आलू और टमाटर की फसलों की स्थितियों, लक्षणों, उपचार और बचाव के बारे में जानें।",
       search: "रोग, फसल या लक्षण खोजें...", all: "सभी फसलें", potato: "🥔 आलू", tomato: "🍅 टमाटर",
