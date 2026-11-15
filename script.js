@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const API_URL = "https://leafcare-plant-disease-detection.onrender.com/predict";
+  // Same address as the page when Flask serves it (laptop or Render).
+  // From VS Code Live Server (port 5500) or a plain file, talk to the local Flask server on port 8000.
+  const API_URL = (location.protocol === "file:" || location.port === "5500")
+    ? "http://127.0.0.1:8000/predict" : "/predict";
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
   let lang = "en", crop = "All", img = null;
@@ -25,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
       aHead: "Analyze Plant", aIntro: "Upload a leaf photograph for analysis by your connected model.",
       upload: "🍃 Upload a leaf image", uploadHelp: "Use a clear photograph with one leaf in focus.",
       noImage: "No image selected.", analyzeBtn: "Analyze leaf", result: "Analysis result",
-      notice: "Upload a leaf image to receive a prediction from the LeafCare AI model.",
+      notice: "The Analyze button sends your photo to the LeafCare model server (/predict). Predictions come from a MobileNetV2 model trained on potato and tomato leaves.",
       gHead: "Disease & Treatment Guide",
       gIntro: "Explore the supported potato and tomato conditions, their symptoms, treatment options, and prevention.",
       search: "Search by disease, crop, or symptom...", all: "All crops", potato: "🥔 Potato", tomato: "🍅 Tomato",
@@ -35,7 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
       footer: "LeafCare — Plant Disease Detection & Treatment Advisory System",
       selected: "Selected: ", noImageAlert: "Please choose a leaf image first.", invalid: "Please select an image file.",
       analyzing: "Analyzing...", error: "Could not analyze the image.",
-      backendError: "Make sure your LeafCare backend is running at http://127.0.0.1:8000 and supports POST /predict.",
+      backendError: "Make sure the LeafCare server is running (python server.py) and that this page is opened through it.",
+    unsure: "We could not recognise this as a clear potato or tomato leaf. Please retake the photo: one leaf, in focus, in good daylight.",
       conf: "Model confidence: ", view: "View guidance", noMatch: "No matching conditions found. Try another search.",
       about: "About:", symptoms: "Common symptoms:", treatment: "Treatment / care:", prevention: "Prevention:",
       general: "General guidance",
@@ -60,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
       aHead: "पौधे की जाँच", aIntro: "अपने जुड़े हुए मॉडल से जाँच कराने के लिए पत्ती की तस्वीर अपलोड करें।",
       upload: "🍃 पत्ती की तस्वीर अपलोड करें", uploadHelp: "एक पत्ती की साफ और स्पष्ट तस्वीर चुनें।",
       noImage: "कोई तस्वीर नहीं चुनी गई है।", analyzeBtn: "पत्ती की जाँच करें", result: "जाँच का परिणाम",
-      notice: "पत्ती की तस्वीर अपलोड करें और LeafCare AI मॉडल से रोग का अनुमान प्राप्त करें।",
+      notice: "जाँच का बटन आपकी फोटो को LeafCare मॉडल सर्वर (/predict) पर भेजता है। परिणाम आलू और टमाटर के पत्तों पर प्रशिक्षित MobileNetV2 मॉडल से आते हैं।",
       gHead: "रोग एवं उपचार गाइड",
       gIntro: "आलू और टमाटर की फसलों की स्थितियों, लक्षणों, उपचार और बचाव के बारे में जानें।",
       search: "रोग, फसल या लक्षण खोजें...", all: "सभी फसलें", potato: "🥔 आलू", tomato: "🍅 टमाटर",
@@ -70,7 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
       footer: "लीफकेयर — पौधों के रोगों की पहचान और देखभाल संबंधी सलाह",
       selected: "चुनी गई तस्वीर: ", noImageAlert: "कृपया पहले पत्ती की तस्वीर चुनें।", invalid: "कृपया तस्वीर वाली फ़ाइल चुनें।",
       analyzing: "तस्वीर की जाँच हो रही है...", error: "तस्वीर की जाँच नहीं हो सकी।",
-      backendError: "जाँचें कि LeafCare बैकएंड http://127.0.0.1:8000 पर चल रहा है और POST /predict का समर्थन करता है।",
+      backendError: "जाँचें कि LeafCare सर्वर चल रहा है (python server.py) और यह पेज उसी सर्वर के माध्यम से खोला गया है।",
+      unsure: "हम इसे साफ़ आलू या टमाटर के पत्ते के रूप में नहीं पहचान पाए। कृपया दोबारा फोटो लें: एक पत्ता, फोकस में, अच्छी रोशनी में।",
       conf: "मॉडल का विश्वास स्कोर: ", view: "सलाह देखें", noMatch: "इस खोज से मेल खाती स्थिति नहीं मिली। दूसरी खोज आज़माएँ।",
       about: "जानकारी:", symptoms: "सामान्य लक्षण:", treatment: "उपचार / देखभाल:", prevention: "बचाव:",
       general: "सामान्य सलाह",
@@ -252,6 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) throw new Error("Backend returned status " + res.status);
 
       const data = await res.json();
+      if (data.rejected) { alert(x.unsure); return; }   // blurry, unsure, or not a supported leaf
       const label = data.label || data.disease || data.prediction || data.class_name;
       if (!label) throw new Error("The backend response did not include a disease label.");
 
@@ -289,7 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
     i18n();
     countScans();
   };
-
   /* ---------- Start ---------- */
   renderTips();
   i18n();
