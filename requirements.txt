@@ -1,6 +1,5 @@
-flask
+Flask
 gunicorn
-pillow
-numpy
-tensorflow
-keras>=3.13.2
+Pillow
+numpy==1.26.4
+tensorflow==2.16.2
