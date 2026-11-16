@@ -1,7 +1,17 @@
-
 import os
+
+# Limit TensorFlow resource usage
+os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
+os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 import numpy as np
 import tensorflow as tf
+
+# Configure TensorFlow threading before loading the model
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
 from flask import Flask, request, jsonify, send_from_directory, abort
 from PIL import Image, UnidentifiedImageError
