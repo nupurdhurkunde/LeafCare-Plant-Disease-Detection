@@ -256,7 +256,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(API_URL, { method: "POST", body: fd });
       if (!res.ok) throw new Error("Backend returned status " + res.status);
 
-      const data = await res.json();
+      const raw = await res.text();
+      let data;
+      try { data = JSON.parse(raw); }
+      catch (e) { throw new Error("The server sent an empty or invalid reply (status " + res.status + "). " +
+        "If this is on Render, the server may still be starting or may have run out of memory. Wait a minute and try once more."); }
       if (data.rejected) { alert(x.unsure); return; }   // blurry, unsure, or not a supported leaf
       const label = data.label || data.disease || data.prediction || data.class_name;
       if (!label) throw new Error("The backend response did not include a disease label.");
@@ -295,6 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
     i18n();
     countScans();
   };
+
   /* ---------- Start ---------- */
   renderTips();
   i18n();
