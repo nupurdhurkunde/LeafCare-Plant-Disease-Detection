@@ -5,3 +5,4 @@ Tomato_Leaf_Mold
 Tomato__Target_Spot
 Tomato__Tomato_mosaic_virus
 Tomato_healthy
+Unsupported
