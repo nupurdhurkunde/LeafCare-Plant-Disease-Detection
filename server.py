@@ -396,10 +396,21 @@ def predict():
     # MODEL PREDICTION
     # ======================================
 
-    probs = model.predict(
+    import time
+
+    inference_start = time.time()
+
+    probs = model(
         arr,
-        verbose=0
-    )[0]
+        training=False
+    ).numpy()[0]
+
+    inference_time = time.time() - inference_start
+
+    print(
+        f"[predict] Inference time: {inference_time:.2f} seconds",
+        flush=True
+    )
 
     order = np.argsort(probs)[::-1]
 
@@ -415,7 +426,6 @@ def predict():
     name = class_names[top]
 
     sharp = sharpness(img)
-
 
     # ======================================
     # UNSUPPORTED IMAGE VALIDATION
