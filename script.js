@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // From VS Code Live Server (port 5500) or a plain file, talk to the local Flask server on port 8000.
 const API_URL = (location.protocol === "file:" || location.port === "5500")
   ? "http://127.0.0.1:8000/predict"
-  : "https://leafcare-plant-disease-detection-1.onrender.com/predict";
+  : "https://leafcare-plant-disease-detection.onrender.com/predict";
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
   let lang = "en", crop = "All", img = null;
